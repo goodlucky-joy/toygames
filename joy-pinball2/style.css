@@ -39,6 +39,42 @@ textarea {
     resize: none;
 }
 
+/* 추가된 설정 그룹 스타일 */
+.setting-group {
+    margin: 10px 10px;
+    font-size: 14px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 8px 15px;
+    border-radius: 5px;
+    display: inline-block;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.setting-group label {
+    margin-left: 10px;
+    cursor: pointer;
+}
+
+#orderToggle {
+    background: #1f4068;
+    color: white;
+    border: 1px solid #4ecca3;
+    padding: 4px 10px;
+    cursor: pointer;
+    border-radius: 4px;
+    font-weight: bold;
+    transition: 0.2s;
+}
+
+#orderToggle:hover {
+    background: #4ecca3;
+    color: #1a1a2e;
+}
+
+.controls {
+    margin-top: 15px;
+}
+
 .controls button {
     background-color: #4ecca3;
     border: none;
@@ -70,6 +106,7 @@ textarea {
     justify-content: center;
     gap: 30px;
     flex-wrap: wrap;
+    margin-top: 20px;
 }
 
 canvas {
@@ -89,7 +126,7 @@ canvas {
 }
 
 .leaderboard h2 {
-    font-size: 18px;
+    font-size: 16px;
     color: #4ecca3;
     border-bottom: 2px solid #162447;
     padding-bottom: 10px;
@@ -100,37 +137,10 @@ canvas {
     font-size: 18px;
     margin-bottom: 10px;
     font-weight: bold;
-    animation: fadeIn 0.5s ease-in-out;
+    animation: fadeIn 0.3s ease-in-out;
 }
 
 @keyframes fadeIn {
     from { opacity: 0; transform: translateX(-10px); }
     to { opacity: 1; transform: translateX(0); }
-}
-
-
-/* 추가된 설정 그룹 스타일 */
-.setting-group {
-    margin: 10px 0;
-    font-size: 14px;
-    background: rgba(255,255,255,0.1);
-    padding: 8px;
-    border-radius: 5px;
-    display: inline-block;
-}
-
-#orderToggle {
-    background: #1f4068;
-    color: white;
-    border: 1px solid #4ecca3;
-    padding: 5px 10px;
-    cursor: pointer;
-    border-radius: 3px;
-    font-weight: bold;
-}
-
-/* 라디오 버튼 간격 */
-.setting-group label {
-    margin-right: 10px;
-    cursor: pointer;
 }
