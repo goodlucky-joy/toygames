@@ -1,0 +1,25 @@
+/* 추가된 설정 그룹 스타일 */
+.setting-group {
+    margin: 10px 0;
+    font-size: 14px;
+    background: rgba(255,255,255,0.1);
+    padding: 8px;
+    border-radius: 5px;
+    display: inline-block;
+}
+
+#orderToggle {
+    background: #1f4068;
+    color: white;
+    border: 1px solid #4ecca3;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 3px;
+    font-weight: bold;
+}
+
+/* 라디오 버튼 간격 */
+.setting-group label {
+    margin-right: 10px;
+    cursor: pointer;
+}
