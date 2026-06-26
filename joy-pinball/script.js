@@ -32,7 +32,7 @@ function initPegs() {
     }
 }
 
-// 2. 공(Ball) 클래스 정의 (수업하기 좋은 객체 지향 구조)
+// 2. 공(Ball) 클래스 정의 (객체 지향 구조)
 class Ball {
     constructor(name, x, color) {
         this.name = name;
