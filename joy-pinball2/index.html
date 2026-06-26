@@ -11,13 +11,15 @@
         <h1>🎮 JOY 핀볼 추첨 게임</h1>
         
         <div class="setup-box">
-            <textarea id="nameInput" placeholder="공에 넣을 이름을 줄바꿈(Enter)으로 구분하여 입력하세요.&#10;예시:&#10;정우&#10;민서&#10;하윤"></textarea>    
+            <textarea id="nameInput" placeholder="공에 넣을 이름을 줄바꿈(Enter)으로 구분하여 입력하세요.&#10;예시:&#10;정우&#10;민서&#10;하윤"></textarea>
+            
             <div class="setting-group">
-                <span>🎨 테마: </span>
+                <span>🎨 테마 선택: </span>
                 <label><input type="radio" name="theme" value="midnight" checked> 미드나잇</label>
                 <label><input type="radio" name="theme" value="neon"> 네온</label>
                 <label><input type="radio" name="theme" value="forest"> 포레스트</label>
             </div>
+
             <div class="setting-group">
                 <span>📏 순위 기준: </span>
                 <button id="orderToggle">먼저 도착 순</button>
@@ -33,7 +35,7 @@
             <canvas id="pinballCanvas" width="500" height="600"></canvas>
             
             <div class="leaderboard">
-                <h2>🏆 실시간 순위 (먼저 도착한 순)</h2>
+                <h2 id="boardTitle">🏆 실시간 순위 (먼저 도착 순)</h2>
                 <ol id="rankList"></ol>
             </div>
         </div>
