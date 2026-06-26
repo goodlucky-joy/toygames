@@ -7,64 +7,63 @@ const rankList = document.getElementById('rankList');
 const orderToggle = document.getElementById('orderToggle');
 const boardTitle = document.getElementById('boardTitle');
 
-// 게임 내부 데이터 상태
+// 게임 데이터 상태 관리
 let balls = [];
 let pegs = [];
-let rankings = []; // 공이 도달한 실제 '순서대로' 이름이 저장됨
+let rankings = [];
 let isPlaying = false;
-let isFirstOrder = true; // true: 먼저 도착 순, false: 늦게 도착 순
+let isFirstOrder = true;
 
-// 눈에 띄는 화려한 공 색상 목록
-const colors = ['#FF5733', '#33FF57', '#3357FF', '#F3FF33', '#FF33F3', '#33FFF0', '#FFA500', '#9A33FF', '#00FF87', '#FF007F'];
+// 유니크하고 채도가 높은 비비드 공 색상 조합
+const colors = ['#FF3366', '#33FF66', '#3366FF', '#FFFF33', '#FF33FF', '#33FFFF', '#FF9900', '#9933FF', '#00FF99', '#FF007F'];
 
-// 3가지 테마 디자인 설정 데이터
+// [버그 수정 & 연동] 테마 데이터 구조 고도화 (장애물과 라인에 글로우/네온 스타일 입히기 전용)
 const themes = {
-    midnight: { bg: '#162447', peg: '#4ecca3', line: '#e94560', ballStroke: '#ffffff' },
-    neon: { bg: '#050505', peg: '#ff00ff', line: '#00ffff', ballStroke: '#ffffff' },
-    forest: { bg: '#1b4332', peg: '#d8f3dc', line: '#ffb703', ballStroke: '#ffffff' }
+    midnight: { bg: '#162447', peg: '#4ecca3', line: '#e94560', ballStroke: '#ffffff', pegGlow: 'rgba(78, 204, 163, 0)' },
+    neon: { bg: '#05050c', peg: '#ff00ff', line: '#00ffff', ballStroke: '#ffffff', pegGlow: '#ff00ff' },
+    forest: { bg: '#112f22', peg: '#a3e635', line: '#f59e0b', ballStroke: '#ffffff', pegGlow: 'rgba(163, 230, 53, 0.3)' }
 };
 let currentTheme = themes.midnight;
 
-// 1. 장애물(Peg) 배치 생성 (지그재그 격자 구조)
+// 1. 장애물 정밀 배치 레이아웃 함수
 function initPegs() {
     pegs = [];
     const rows = 8;
     const cols = 8;
     for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
-            let x = 50 + c * 55 + (r % 2 === 0 ? 0 : 25);
-            let y = 120 + r * 50;
-            if (x < canvas.width - 20) {
+            let x = 50 + c * 56 + (r % 2 === 0 ? 0 : 28);
+            let y = 130 + r * 50;
+            if (x < canvas.width - 25) {
                 pegs.push({ x: x, y: y, radius: 6 });
             }
         }
     }
 }
 
-// 2. 공(Ball) 클래스 정의
+// 2. 물리 연산 처리 공 객체 모델링
 class Ball {
     constructor(name, x, color) {
         this.name = name;
         this.x = x;
-        this.y = 30; // 상단 출발선 높이
-        this.radius = 14;
+        this.y = 35;
+        this.radius = 13;
         this.color = color;
-        this.vx = (Math.random() - 0.5) * 3; // 초기 좌우 무작위 속도
-        this.vy = 1;                         // 초기 낙하 속도
-        this.gravity = 0.15;                 // 중력 가속도
-        this.bounce = 0.5;                   // 반사 탄성 계수
+        this.vx = (Math.random() - 0.5) * 4;
+        this.vy = 1;
+        this.gravity = 0.18;
+        this.bounce = 0.55;
         this.isFinished = false;
     }
 
     update() {
         if (this.isFinished) return;
 
-        // 물리 법칙: 가속도 적용 및 위치 이동
         this.vy += this.gravity;
         this.x += this.vx;
         this.y += this.vy;
 
-        // 좌우 벽면 충돌 처리
+        // 벽 충돌 제어
         if (this.x - this.radius < 0) {
             this.x = this.radius;
             this.vx *= -this.bounce;
@@ -73,7 +72,7 @@ class Ball {
             this.vx *= -this.bounce;
         }
 
-        // 장애물(Peg)과의 충돌 처리 (수학 공식 활용)
+        // 못(Peg) 충돌 정밀 처리
         pegs.forEach(peg => {
             let dx = this.x - peg.x;
             let dy = this.y - peg.y;
@@ -81,18 +80,16 @@ class Ball {
 
             if (distance < this.radius + peg.radius) {
                 let angle = Math.atan2(dy, dx);
-                // 밀려남 처리
                 this.x = peg.x + Math.cos(angle) * (this.radius + peg.radius);
                 this.y = peg.y + Math.sin(angle) * (this.radius + peg.radius);
                 
-                // 튕겨나가는 속도 계산 및 무작위성 부여
                 let speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
-                this.vx = Math.cos(angle) * speed * this.bounce + (Math.random() - 0.5) * 1;
+                this.vx = Math.cos(angle) * speed * this.bounce + (Math.random() - 0.5) * 1.5;
                 this.vy = Math.sin(angle) * speed * this.bounce;
             }
         });
 
-        // [기능 추가 1] 공과 공끼리의 충돌 처리 (이중 반복 연산 기반)
+        // 공 간 충돌 처리
         balls.forEach(other => {
             if (other === this || other.isFinished) return;
             
@@ -102,10 +99,6 @@ class Ball {
 
             if (distance < this.radius * 2) {
                 let angle = Math.atan2(dy, dx);
-                // 겹침 현상 방지를 위해 살짝 밀어내기
-                this.x = other.x + Math.cos(angle) * (this.radius * 2);
-                
-                // 서로 반대 방향으로 속도 튕기기 가중치 부여
                 this.vx += Math.cos(angle) * 1.2;
                 this.vy += Math.sin(angle) * 1.2;
                 other.vx -= Math.cos(angle) * 1.2;
@@ -113,25 +106,32 @@ class Ball {
             }
         });
 
-        // 바닥 빨간 선 도달 판정
-        if (this.y + this.radius >= canvas.height - 5) {
-            this.y = canvas.height - 5 - this.radius;
+        // 도착선 판정
+        if (this.y + this.radius >= canvas.height - 8) {
+            this.y = canvas.height - 8 - this.radius;
             this.isFinished = true;
             recordRank(this.name);
         }
     }
 
     draw() {
+        ctx.save();
+        // 공 입체감 드롭 섀도우 처리
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+        ctx.shadowBlur = 6;
+        ctx.shadowOffsetY = 3;
+
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         ctx.fillStyle = this.color;
         ctx.fill();
         ctx.strokeStyle = currentTheme.ballStroke;
-        ctx.lineWidth = 1.5;
+        ctx.lineWidth = 2;
         ctx.stroke();
         ctx.closePath();
+        ctx.restore();
 
-        // 공 중심에 텍스트 렌더링
+        // 공 위 이름 표시
         ctx.fillStyle = '#000000';
         ctx.font = 'bold 11px sans-serif';
         ctx.textAlign = 'center';
@@ -139,23 +139,50 @@ class Ball {
     }
 }
 
-// 3. [기능 추가 3] 정렬 기준에 따른 순위판 화면 출력 함수
+// 3. 화면을 정적으로 다시 그리는 전용 함수 (테마 스위칭 시 장애물이 즉시 바뀌도록 설계)
+function drawStaticScene() {
+    // 배경 채우기
+    ctx.fillStyle = currentTheme.bg;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // 장애물 그리기 루프
+    pegs.forEach(peg => {
+        ctx.save();
+        // 네온 모드 시 글로우 시각 효과 활성화
+        if (currentTheme.pegGlow !== 'rgba(78, 204, 163, 0)') {
+            ctx.shadowColor = currentTheme.pegGlow;
+            ctx.shadowBlur = 10;
+        }
+        ctx.beginPath();
+        ctx.arc(peg.x, peg.y, peg.radius, 0, Math.PI * 2);
+        ctx.fillStyle = currentTheme.peg;
+        ctx.fill();
+        ctx.closePath();
+        ctx.restore();
+    });
+
+    // 빨간색 하단 킬 선(도착 스코어 바) 렌더링
+    ctx.strokeStyle = currentTheme.line;
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(0, canvas.height - 8);
+    ctx.lineTo(canvas.width, canvas.height - 8);
+    ctx.stroke();
+}
+
+// 4. 순위 정렬 결과 출력 엔진
 function renderLeaderboard() {
     rankList.innerHTML = '';
-    
-    // 원본 데이터 보존을 위해 배열 복사
     let displayRank = [...rankings];
     
-    // '늦게 도착 순' 선택 시 화면 표시 배열만 뒤집기
     if (!isFirstOrder) {
         displayRank.reverse();
     }
 
     displayRank.forEach((name, index) => {
         const li = document.createElement('li');
-        // 순위 숫자 매기기 계산 분기
         let rankNum = isFirstOrder ? index + 1 : rankings.length - index;
-        li.textContent = `${rankNum}등: ${name}`;
+        li.textContent = `${rankNum}등 : ${name}`;
         rankList.appendChild(li);
     });
 }
@@ -167,17 +194,17 @@ function recordRank(name) {
     }
 }
 
-// 4. 애니메이션 메인 루프 프레임 제어
+// 5. 프레임 렌더링 루프
 function animate() {
     if (!isPlaying) return;
     
-    // 잔상 렌더링 효과 적용
+    // 테마 배경을 약간의 투명도로 덮어 공 궤적 잔상 효과 구현
     ctx.fillStyle = currentTheme.bg;
-    ctx.globalAlpha = 0.3;
+    ctx.globalAlpha = 0.25;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.globalAlpha = 1.0; // 복구
+    ctx.globalAlpha = 1.0; 
 
-    // 테마 기반 장애물 렌더링
+    // 현재 선택 테마 색상으로 장애물 그리기
     pegs.forEach(peg => {
         ctx.beginPath();
         ctx.arc(peg.x, peg.y, peg.radius, 0, Math.PI * 2);
@@ -186,15 +213,15 @@ function animate() {
         ctx.closePath();
     });
 
-    // 테마 기반 도착선 렌더링
+    // 현재 선택 테마의 골라인 스트로크
     ctx.strokeStyle = currentTheme.line;
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 4;
     ctx.beginPath();
-    ctx.moveTo(0, canvas.height - 5);
-    ctx.lineTo(canvas.width, canvas.height - 5);
+    ctx.moveTo(0, canvas.height - 8);
+    ctx.lineTo(canvas.width, canvas.height - 8);
     ctx.stroke();
 
-    // 모든 객체 업데이트 및 드로잉
+    // 움직이는 실시간 객체 활성화
     balls.forEach(ball => {
         ball.update();
         ball.draw();
@@ -203,28 +230,20 @@ function animate() {
     requestAnimationFrame(animate);
 }
 
-// 5. 제어 이벤트 처리 리스너들
+// 6. 이벤트 핸들러 바인딩 코드 
 
-// [기능 추가 2] 라디오 버튼 변경 이벤트 바인딩
+// [해결] 테마 변경 시 화면이 비어있거나 변화 없는 문제 완전 해결
 document.querySelectorAll('input[name="theme"]').forEach(radio => {
     radio.addEventListener('change', (e) => {
         currentTheme = themes[e.target.value];
+        // 캔버스 스타일 백그라운드 연동 동기화 추가
+        canvas.style.backgroundColor = currentTheme.bg;
         if (!isPlaying) {
-            // 게임 중이 아닐 때는 배경 디자인을 바로 리프레시해 줌
-            ctx.fillStyle = currentTheme.bg;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            pegs.forEach(peg => {
-                ctx.beginPath();
-                ctx.arc(peg.x, peg.y, peg.radius, 0, Math.PI * 2);
-                ctx.fillStyle = currentTheme.peg;
-                ctx.fill();
-                ctx.closePath();
-            });
+            drawStaticScene(); // 게임 중이 아닐 때 바뀐 색상 즉시 드로잉 호출
         }
     });
 });
 
-// [기능 추가 3] 정렬 방식 변경 토글 스위치 처리
 orderToggle.addEventListener('click', () => {
     isFirstOrder = !isFirstOrder;
     if (isFirstOrder) {
@@ -234,16 +253,15 @@ orderToggle.addEventListener('click', () => {
         orderToggle.textContent = "늦게 도착 순";
         boardTitle.textContent = "🏆 실시간 순위 (늦게 도착 순)";
     }
-    renderLeaderboard(); // 기존 결과 새로 정렬해서 뿌리기
+    renderLeaderboard();
 });
 
-// 게임 시작 액션
 startBtn.addEventListener('click', () => {
     if (isPlaying) return;
 
     const names = nameInput.value.split('\n').map(n => n.trim()).filter(n => n !== '');
     if (names.length === 0) {
-        alert('공을 생성할 이름을 최소 1개 이상 작성해 주세요!');
+        alert('이름을 작성해 주세요!');
         return;
     }
 
@@ -261,29 +279,17 @@ startBtn.addEventListener('click', () => {
     animate();
 });
 
-// 화면 및 데이터 클리어 액션
 resetBtn.addEventListener('click', () => {
     isPlaying = false;
     balls = [];
     rankings = [];
     rankList.innerHTML = '';
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
+    canvas.style.backgroundColor = currentTheme.bg;
     initPegs();
-    
-    // 초기 테마 스타일로 배경 그리기
-    ctx.fillStyle = currentTheme.bg;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    pegs.forEach(peg => {
-        ctx.beginPath();
-        ctx.arc(peg.x, peg.y, peg.radius, 0, Math.PI * 2);
-        ctx.fillStyle = currentTheme.peg;
-        ctx.fill();
-        ctx.closePath();
-    });
+    drawStaticScene(); // 리셋 즉시 장애물 재생성 및 테마 동기화 드로잉
 });
 
-// 앱 첫 구동 시 초기화 실행
+// 실행 초기화 엔진 구동
 initPegs();
 resetBtn.click();
